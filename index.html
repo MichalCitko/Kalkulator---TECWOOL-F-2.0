@@ -444,7 +444,7 @@ Eksport Excel
     <option value="">-- Wybierz typ stropu --</option>
     <option value="wps">Belkowo-płytowy (WPS)</option>
     <option value="ackerman">Gęstożebrowy (Ackerman)</option>
-    <option value="klein">Belkowo-pustakowy (Klein / DZ / DMS)</option>
+    <option value="klein">Belkowo-pustakowy (Klein / DZ / DMS / TERIVA)</option>
   </select>
   </div>
 
@@ -5219,7 +5219,7 @@ function calculateKleinPrefab() {
     prefabResults.push({
       description:
         document.getElementById("kleinDescription").value,
-      type: "Klein / DZ / DMS",
+      type: "Klein / DZ / DMS / TERIVA",
       R,
       insulation: "-",
       area,
@@ -5264,7 +5264,7 @@ function calculateKleinPrefab() {
   prefabResults.push({
     description:
       document.getElementById("kleinDescription").value,
-    type: "Klein / DZ / DMS",
+    type: "Klein / DZ / DMS / TERIVA",
     R,
     insulation: "-",
     area,
@@ -5278,7 +5278,7 @@ function calculateKleinPrefab() {
     resinLitres,
     meshArea,
     anchors,
-    note: `Klein / DZ / DMS – ${thicknessText}.`
+    note: `Klein / DZ / DMS / TERIVA – ${thicknessText}.`
   });
 
   updatePrefabTable();
