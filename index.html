@@ -4028,6 +4028,11 @@ if (element === "wallSlab") {
       document.getElementById("slabThickness").value
     );
 
+if (!Number.isFinite(hs) || hs <= 0) {
+  alert("Wprowadź poprawną grubość płyty hs.");
+  return;
+}
+
 if (a > hs) {
  
 alert(
@@ -4070,49 +4075,32 @@ concreteWallSlab[R][range][temp];
  
 let finalThickness = thickness;
  
-// ✅ minimalna przebadana grubość TECWOOL F
 const MIN_TESTED_THICKNESS = 12.1;
- 
-if (
-finalThickness > 0 &&
-finalThickness < MIN_TESTED_THICKNESS
-) {
- 
-finalThickness =
-MIN_TESTED_THICKNESS;
- 
-}
- 
-let equivalent =
-getEquivalentConcrete(
-R,
-thickness
-);
-let requiredHs = req.hs;
-let missingConcrete = 0;
 
-if (hs + equivalent < requiredHs) {
+let uwagi = [];
 
-  let requiredEquivalent =
-    requiredHs - hs;
-  missingConcrete = requiredHs - hs - equivalent;
+if (hs < req.hs) {
+  const requiredEquivalent = req.hs - hs;
+  const equivalentData = equivalentConcrete[R];
 
-  finalThickness =
-    getTecwoolThickness(
-      R,
-      requiredEquivalent
-    );
-}
+  if (requiredEquivalent > equivalentData.c2) {
+    document.getElementById("concreteResult").innerText =
+      `Wymagany ekwiwalent betonu (${requiredEquivalent} mm) przekracza zakres dostępnych danych dla ${R}.`;
+    return;
+  }
 
+  const interpolatedThickness =
+    getTecwoolThickness(R, requiredEquivalent);
 
+  finalThickness = Math.max(
+    finalThickness,
+    MIN_TESTED_THICKNESS,
+    interpolatedThickness
+  );
 
-let uwagi = "";
- 
-if (finalThickness > thickness) {
- 
-uwagi =
-`Grubość TECWOOL F zwiększono z ${thickness} mm do ${finalThickness} mm z uwagi na niespełnienie wymagań EC2.`;
- 
+  uwagi.push(
+    `Grubość płyty hs poniżej minimum EC2 (${req.hs} mm); grubość TECWOOL F dobrano z interpolacji ekwiwalentu betonu.`
+  );
 }
 
 let consumption =
@@ -4162,7 +4150,7 @@ document.getElementById("concreteResultsBody")
   <td>${loss}</td>
   <td>${slabArea.toFixed(2)}</td>
   <td>${consumption.toFixed(1)}</td>
-  <td>${uwagi}</td>
+  <td>${uwagi.join("<br>")}</td>
 
 
 
@@ -4198,138 +4186,6 @@ document.getElementById("concreteSumWeight").innerText =
 document.getElementById("concreteSumPrice").innerText =
   (currentPrice + cost).toFixed(2);
 
-let statusMessage = "";
-
-
-let warnings = [];
-
-if (a < req.a) {
-
-  warnings.push(
-    `⚠ Parametr a (${a} mm) jest mniejszy od wymaganego ${req.a} mm`
-  );
-
-}
-
-if (hs < req.hs) {
-
-  warnings.push(
-    `⚠ Grubość płyty hs (${hs} mm) jest mniejsza od wymaganej ${req.hs} mm`
-  );
-
-}
-
-if (missingConcrete > 0) {
-
-  statusMessage = `
-    <div style="
-      color:#d97706;
-      font-weight:bold;
-      margin-bottom:10px;
-    ">
-      ${warnings.join("<br>")}
-    </div>
-
-    <div style="
-      color:green;
-      font-weight:bold;
-      margin-bottom:15px;
-    ">
-      ✅ Wymagania ${R} spełnione po korekcie grubości izolacji.
-    </div>
-  `;
-
-} else {
-
-  statusMessage = `
-    <div style="
-      color:green;
-      font-weight:bold;
-      margin-bottom:15px;
-    ">
-      ✅ Element spełnia wymagania ${R}
-    </div>
-  `;
-
-}
-
-
-document.getElementById("concreteResult").innerHTML = `
-
-${statusMessage}
-
-<table style="border-collapse:collapse;width:100%;max-width:550px;">
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;">
-    Klasa odporności
-  </td>
-  <td style="border:1px solid #ccc;padding:8px;">
-    ${R}
-  </td>
-</tr>
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;">
-    Temperatura krytyczna
-  </td>
-  <td style="border:1px solid #ccc;padding:8px;">
-    ${temp} °C
-  </td>
-</tr>
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;">
-    Parametr a
-  </td>
-  <td style="border:1px solid #ccc;padding:8px;">
-    ${a} mm
-  </td>
-</tr>
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;">
-    Grubość płyty hs
-  </td>
-  <td style="
-      border:1px solid #ccc;
-      padding:8px;
-      ${hs < req.hs ? "color:red;font-weight:bold;" : ""}
-    ">
-    ${hs} mm
-  </td>
-</tr>
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;">
-    Minimalne hs wg EC2
-  </td>
-  <td style="border:1px solid #ccc;padding:8px;">
-    ${req.hs} mm
-  </td>
-</tr>
-
-<tr>
-  <td style="border:1px solid #ccc;padding:8px;font-weight:bold;">
-    Wymagana grubość TECWOOL F
-  </td>
-  <td style="
-      border:1px solid #ccc;
-      padding:8px;
-      color:#4B0082;
-      font-size:24px;
-      font-weight:bold;
-    ">
-    ${finalThickness.toString().replace(".", ",")} mm
-  </td>
-</tr>
-
-
-
-</table>
-
-`;
-
   } // koniec wallSlab
 
 
@@ -4361,6 +4217,11 @@ if (element === "beam") {
   let req =
     beamRequirements[R];
 
+  if (!Number.isFinite(b) || b <= 0) {
+    alert("Wprowadź poprawną szerokość belki b.");
+    return;
+  }
+
   let range =
     findRange(
       concreteBeamColumn[R],
@@ -4377,56 +4238,92 @@ if (element === "beam") {
   }
 
 
-let thickness =
+let tableThickness =
 concreteBeamColumn[R][range][temp];
  
+if (tableThickness === null) {
+  alert("Dla wybranej kombinacji nie ma możliwości wykonania zabezpieczenia TECWOOL F.");
+  return;
+}
+
+if (!Number.isFinite(tableThickness)) {
+  alert("Brak danych dla wybranych parametrów.");
+  return;
+}
+
+let thickness = tableThickness === null ? 0 : tableThickness;
 let finalThickness =
 thickness;
  
 let uwagi = "";
- 
+
+const MIN_TESTED_THICKNESS = 12.2;
+const MAX_TESTED_THICKNESS = 38;
+
+if (b < req.b) {
+  const conversion =
+    equivalentConcreteBeamColumn[R];
+
+  if (
+    !conversion ||
+    !Number.isFinite(conversion.thin.tecwool) ||
+    !Number.isFinite(conversion.thin.concrete) ||
+    !Number.isFinite(conversion.thick.tecwool) ||
+    !Number.isFinite(conversion.thick.concrete)
+  ) {
+    document.getElementById("concreteResult").innerText =
+      `Brak danych ekwiwalentu betonu dla ${R}; nie można zweryfikować wymaganej szerokości belki.`;
+    return;
+  }
+
+  let equivalent = 0;
+
+  if (thickness > 0) {
+    equivalent =
+      getEquivalentConcreteBeamColumn(R, thickness);
+  }
+
+  if (b + 2 * equivalent < req.b) {
+    const requiredEquivalent =
+      (req.b - b) / 2;
+    let requiredThickness =
+      getTecwoolThicknessBeamColumn(R, requiredEquivalent);
+
+    if (!Number.isFinite(requiredThickness)) {
+      document.getElementById("concreteResult").innerText =
+        `Brak danych do zwiększenia grubości TECWOOL F dla ${R}.`;
+      return;
+    }
+
+    requiredThickness = Math.max(
+      MIN_TESTED_THICKNESS,
+      requiredThickness
+    );
+
+    while (
+      requiredThickness <= MAX_TESTED_THICKNESS &&
+      b + 2 * getEquivalentConcreteBeamColumn(R, requiredThickness) < req.b
+    ) {
+      requiredThickness =
+        Math.round((requiredThickness + 0.1) * 10) / 10;
+    }
+
+    finalThickness = Math.max(finalThickness, requiredThickness);
+  }
+}
+
 if (finalThickness === 0) {
- 
-uwagi =
-"Element spełnia wymagania odporności ogniowej bez dodatkowego zabezpieczenia TECWOOL F.";
- 
-}
- 
-let equivalent =
-getEquivalentConcreteBeamColumn(
-R,
-thickness
-);
- 
-
- 
-if (b + 2 * equivalent < req.b) {
- 
-let requiredEquivalent =
-(req.b - b) / 2;
- 
-finalThickness =
-getTecwoolThicknessBeamColumn(
-R,
-requiredEquivalent
-);
-
+  uwagi =
+    "Element spełnia wymagania odporności ogniowej bez dodatkowego zabezpieczenia TECWOOL F.";
 }
 
-
- 
-if (finalThickness > thickness) {
- 
-uwagi =
-`Grubość TECWOOL F zwiększono z ${thickness} mm do ${finalThickness} mm z uwagi na niespełnienie wymagań EC2.`;
- 
-} 
-// ✅ maksymalna przebadana grubość TECWOOL F
-if (finalThickness > 38) {
+if (finalThickness > MAX_TESTED_THICKNESS) {
  
 uwagi =
 "Przekrój elementu zbyt mały.<br>" +
-"Wymagana grubość TECWOOL F przekracza 38 mm.<br>" +
+"Wymagana grubość TECWOOL F przekracza " +
+MAX_TESTED_THICKNESS +
+" mm.<br>" +
 "Należy zwiększyć przekrój elementu.";
  
 finalThickness = "-";
@@ -4594,8 +4491,21 @@ let temp =
     return;
   }
 
- let finalThickness =
-concreteBeamColumn[R][range][temp];
+let tableThickness =
+  concreteBeamColumn[R][range][temp];
+
+if (tableThickness === null) {
+  alert("Dla wybranej kombinacji nie ma możliwości wykonania zabezpieczenia TECWOOL F.");
+  return;
+}
+
+if (!Number.isFinite(tableThickness)) {
+  alert("Brak danych dla wybranych parametrów.");
+  return;
+}
+
+let finalThickness =
+  tableThickness === null ? 0 : tableThickness;
  
 if (finalThickness === 0) {
  
@@ -4629,7 +4539,7 @@ finalThickness = MIN_TESTED_THICKNESS;
  
 let equivalent = 0;
  
-if (finalThickness !== "-") {
+if (finalThickness > 0) {
  
 equivalent =
 getEquivalentConcreteBeamColumn(
@@ -4736,7 +4646,7 @@ consumption * price;
 <td>${temp}</td>
 <td>${a}</td>
 <td>${b} x ${h}</td>
-<td>${finalThickness}</td>
+<td>${finalThickness === 0 ? "-" : finalThickness}</td>
 
 
 
