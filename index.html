@@ -6120,89 +6120,49 @@ document.getElementById("concreteSumPrice").innerText;
  
 }
  
-let html = `
-<html>
-<head>
-  <meta charset="UTF-8">
-</head>
-<body>
+const csvEscape = value => {
+  let text = String(value ?? "").replace(/\r?\n/g, " ");
+  if (/^[=+\-@]/.test(text)) {
+    text = "'" + text;
+  }
+  return `"${text.replace(/"/g, '""')}"`;
+};
 
-  ${table.outerHTML}
+const csvRows = Array.from(table.rows, row =>
+  Array.from(row.cells, cell => cell.innerText.trim())
+);
 
-  <br><br>
+csvRows.push(
+  [],
+  ["PODSUMOWANIE"],
+  ["Projekt", projectText],
+  ["Powierzchnia łączna", `${areaText} m²`],
+  ["Zużycie łączne", `${weightText} kg`],
+  ["Koszt orientacyjny", `${priceText} PLN`],
+  [],
+  ["Uwagi*"],
+  ["Podane zużycie materiału jest szacunkowe i ze względu na specyfikę prac natryskowych zależy od wielu czynników:"],
+  ["a) rodzaj zabezpieczanej konstrukcji"],
+  ["b) użyta maszyna"],
+  ["c) użyta dysza"],
+  ["d) przegrubienie"],
+  ["Temperatura krytyczna przyjęta na potrzeby oszacowania elementów zabezpieczenia ogniochronnego. O określeniu temperatury krytycznej elementów każdorazowo decyduje Projektant."],
+  ["Ekspozycja 3-stronna jest liczona na krótszy bok, tj. element styka sie półką z przegrodą."],
+  ["Zestawienie posiada wyłącznie charakter poglądowy i zostało przygotowane w oparciu o informacje zawarte w zapytaniu ofertowym. Nie stanowi projektu PPOŻ obiektu budowlanego. Opracowanie powinno być zawsze zweryfikowane przez Wykonawcę i zatwierdzone przez autora Projektu Technicznego."]
+);
 
-  <h3>PODSUMOWANIE</h3>
+const csv = csvRows
+  .map(row => row.map(csvEscape).join(";"))
+  .join("\r\n");
 
-  <table border="1">
-    <tr>
-      <td><b>Projekt</b></td>
-      <td>${projectText}</td>
-    </tr>
-
-    <tr>
-      <td><b>Powierzchnia łączna</b></td>
-      <td>${areaText} m²</td>
-    </tr>
-
-    <tr>
-      <td><b>Zużycie łączne</b></td>
-      <td>${weightText} kg</td>
-    </tr>
-
-    <tr>
-      <td><b>Koszt orientacyjny</b></td>
-      <td>${priceText} PLN</td>
-    </tr>
-  </table>
-
-  <br><br>
-
-
-
-    <table>
-      <tr>
-        <td><b>Uwagi*</b></td>
-      </tr>
-      <tr>
-        <td>Podane zużycie materiału jest szacunkowe i ze względu na specyfikę prac natryskowych zależy od wielu czynników:</td>
-      </tr>
-      <tr><td>a) rodzaj zabezpieczanej konstrukcji</td></tr>
-      <tr><td>b) użyta maszyna</td></tr>
-      <tr><td>c) użyta dysza</td></tr>
-      <tr><td>d) przegrubienie</td></tr>
-
-      <tr><td></td></tr>
-
-      <tr>
-        <td>Temperatura krytyczna przyjęta na potrzeby oszacowania elementów zabezpieczenia ogniochronnego. O określeniu temperatury krytycznej elementów każdorazowo decyduje Projektant.</td>
-      </tr>
-  
- <tr><td></td></tr>
- <tr>
-        <td>Ekspozycja 3-stronna jest liczona na krótszy bok, tj. element styka sie półką z przegrodą.</td>
-      </tr>
-
-
-      <tr><td></td></tr>
-
-      <tr>
-        <td>Zestawienie posiada wyłącznie charakter poglądowy i zostało przygotowane w oparciu o informacje zawarte w zapytaniu ofertowym. Nie stanowi projektu PPOŻ obiektu budowlanego. Opracowanie powinno być zawsze zweryfikowane przez Wykonawcę i zatwierdzone przez autora Projektu Technicznego.</td>
-      </tr>
-
-    </table>
-
-  </body>
-  </html>
-  `;
-
-  let blob = new Blob(
-    ["\ufeff", html],
-    { type: "application/vnd.ms-excel;charset=utf-8;" }
-  );
+const blob = new Blob(
+  ["\ufeff", csv],
+  { type: "text/csv;charset=utf-8;" }
+);
 
   let link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "zestawienie.xls";
+  link.download = "zestawienie.csv";
   link.click();
 }
 
