@@ -6032,11 +6032,18 @@ document.getElementById("concreteSumPrice").innerText;
  
 const csvEscape = value => {
   let text = String(value ?? "").replace(/\r?\n/g, " ");
-  if (/^[=+\-@]/.test(text)) {
+
+  if (/^-?\d+(?:\.\d+)?%?$/.test(text)) {
+    text = text.replace(".", ",");
+  } else if (/^[=+\-@]/.test(text)) {
     text = "'" + text;
   }
+
   return `"${text.replace(/"/g, '""')}"`;
 };
+
+const csvNumber = value =>
+  String(value ?? "").replace(".", ",");
 
 const csvRows = Array.from(table.rows, row =>
   Array.from(row.cells, cell => cell.innerText.trim())
@@ -6046,9 +6053,9 @@ csvRows.push(
   [],
   ["PODSUMOWANIE"],
   ["Projekt", projectText],
-  ["Powierzchnia łączna", `${areaText} m²`],
-  ["Zużycie łączne", `${weightText} kg`],
-  ["Koszt orientacyjny", `${priceText} PLN`],
+  ["Powierzchnia łączna", `${csvNumber(areaText)} m²`],
+  ["Zużycie łączne", `${csvNumber(weightText)} kg`],
+  ["Koszt orientacyjny", `${csvNumber(priceText)} PLN`],
   [],
   ["Uwagi*"],
   ["Podane zużycie materiału jest szacunkowe i ze względu na specyfikę prac natryskowych zależy od wielu czynników:"],
